@@ -1,0 +1,35 @@
+name: Publier InvestiFull Eucalyptus
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/configure-pages@v5
+      - name: Vérifier et extraire le paquet approuvé
+        shell: bash
+        run: |
+          cat eucalyptus-web.part1 eucalyptus-web.part2 > eucalyptus-web.zip
+          echo '48bdd69f64d89bc8acb71c7d3cb00522f1ed856570ad43c6510ebc93f4fd8d8d  eucalyptus-web.zip' | sha256sum --check
+          unzip -q eucalyptus-web.zip -d site
+          test -f site/index.html
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+      - uses: actions/deploy-pages@v4
+        id: deployment
